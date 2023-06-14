@@ -5,4 +5,6 @@ This is my repository that contains my analysis on the overall list of movies an
 - it shows how many films with the highest Rotten Tomatoes audience score
 - it this query shows which films have the highest Rotten Tomatoes critic score*
 - this query shows which films have the highest IMDb score
+- i went to the market and bought a...
+
 
