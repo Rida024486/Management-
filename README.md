@@ -5,5 +5,4 @@ This is my repository that contains my analysis on XX films.
 - XXX
 - 
 
-
-![Test](test.png)
+<img src="test.png">
