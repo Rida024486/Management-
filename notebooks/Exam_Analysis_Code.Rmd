@@ -1,0 +1,191 @@
+---
+title: "Exam Project: Film Analysis"
+---
+
+
+```{r}
+library(DBI)
+filename <- "../data/exam_database.db"
+my_connection <- dbConnect(RSQLite::SQLite(),
+                           dbname = filename)
+my_connection
+```
+```{r}
+dbListTables(my_connection)
+```
+```{sql connection=my_connection}
+/*this query joins all three tables together*/
+select t1.*,
+       t2.score as imdb_score,
+       t3.audience_score as rt_audience_score,
+       t3.critic_score as rt_critic_score
+from films t1
+join imdb_scores t2 on t1.film_id = t2.film_id
+join rotten_tomatoes_scores t3 on t1.film_id = t3.film_id
+
+```
+```{sql connection=my_connection}
+/*this query illustrates the highest "Wow Factor" score.*/
+select t1.film_id, t1.film_name,
+       (t2.imdb_score + t3.rt_audience_score + t3.rt_critic_score) AS wow_factor_score
+from films t1
+join (
+  select film_id, score AS imdb_score
+  from imdb_scores
+) t2 ON t1.film_id = t2.film_id
+join (
+  select film_id, audience_score AS rt_audience_score, critic_score AS rt_critic_score
+  from rotten_tomatoes_scores
+) t3 ON t1.film_id = t3.film_id
+order by  wow_factor_score desc
+limit 2;
+
+
+```
+```{sql connection=my_connection}
+/*This query finds any films that were released in a specific time period and received a perfect score in all three rating categories.*/
+select t1.film_id, t1.film_name
+join films t1
+join (
+  select film_id
+  from imdb_scores
+  where score = 10
+) t2 on t1.film_id = t2.film_id
+join (
+  select film_id
+  from rotten_tomatoes_scores
+  where audience_score = 100 and critic_score = 100
+) t3 on t1.film_id = t3.film_id
+where t1.time_period = 'Specific Time Period';
+
+```
+```{sql connection=my_connection}
+/*This query finds if there are any correlation between the length of a film's title and its IMDb score*/
+select lenght(t1.film_name) AS title_length, AVG(t2.score) AS average_imdb_score
+from films t1
+join imdb_scores t2 ON t1.film_id = t2.film_id
+group title_length
+order by title_length;
+
+```
+```{sql connection=my_connection}
+/*this query gives top 10 genres ordered by rotten tomatoes audience score*/
+select avg(t3.audience_score) as avg_rt_audience_score,
+       avg(t3.critic_score) as avg_rt_critic_score,
+       avg(t2.score) as avg_imdb_score
+from films t1
+join imdb_scores t2 on t1.film_id = t2.film_id
+join rotten_tomatoes_scores t3 on t1.film_id = t3.film_id
+group by "genre(s)"
+order by sum(t3.audience_score) desc
+limit 5
+```
+```{sql connection=my_connection}
+/*this query counts many films were released each year.*/
+select release_year, count(*) AS film_count
+from films
+group by release_year;
+
+
+```
+```{sql connection=my_connection}
+/*This query shows how many films with the highest Rotten Tomatoes audience score*/
+
+select t1.film_id, t1.film_name, t3.audience_score as rt_audience_score
+from films t1
+join rotten_tomatoes_scores t3 on t1.film_id = t3.film_id;
+
+
+```
+```{sql connection=my_connection}
+/*this query shows which films have the highest Rotten Tomatoes critic score*/
+select t1.film_id, t1.film_name, t3.critic_score AS rt_critic_score
+from films t1
+join rotten_tomatoes_scores t3 ON t1.film_id = t3.film_id
+where t3.critic_score = (select max(critic_score) from rotten_tomatoes_scores);
+
+
+```
+```{sql connection=my_connection}
+/*this query shows which films have the highest IMDb score*/
+SELECT t1.film_id, t1.film_name, t2.score AS imdb_score
+FROM films t1
+JOIN imdb_scores t2 ON t1.film_id = t2.film_id
+WHERE t2.score = (SELECT MAX(score) FROM imdb_scores);
+
+
+
+```
+```{sql connection=my_connection}
+/*this query shows What is the IMDb score of each film*/
+SELECT t1.film_id, t1.film_name, t2.score AS imdb_score
+FROM films t1
+JOIN imdb_scores t2 ON t1.film_id = t2.film_id;
+
+
+```
+```{r}
+# import the library
+library(tidyverse)
+
+# write the SQL query in the paste function and store as a variable called query
+
+query <- paste("
+select film_name,
+       avg(t3.audience_score) as avg_rt_audience_score,
+       avg(t3.critic_score) as avg_rt_critic_score,
+       avg(t2.score) as avg_imdb_score
+from films t1
+join imdb_scores t2 on t1.film_id = t2.film_id
+join rotten_tomatoes_scores t3 on t1.film_id = t3.film_id
+group by film_name
+order by sum(t3.audience_score) desc
+limit 5",
+sep = "" )
+
+# pass your connection and the query to the tbl function and store as a variable
+
+top_rt_audience_films <- tbl(my_connection, sql(query))
+top_rt_audience_films
+```
+```{r}
+top_rt_audience_films %>%
+  ggplot(aes(x=reorder(film_name, -avg_rt_audience_score), y = avg_rt_audience_score)) +
+    geom_bar(stat = 'identity', color="pink", fill="lavender") +
+      xlab('Film Name') +
+        ylab('Rotten Tomatoes Audience Score') +
+          ggtitle("Top 5 Films According to Rotten Tomatoes Audience Score") +
+             theme(axis.text.x = element_text(size = 15))
+```
+```{r}
+# import the library
+library(tidyverse)
+
+# write the SQL query in the paste function and store as a variable called query
+query <- paste('
+select "genre(s)" as genres,
+       avg(t3.audience_score) as avg_rt_audience_score,
+       avg(t3.critic_score) as avg_rt_critic_score,
+       avg(t2.score) as avg_imdb_score
+from films t1
+join imdb_scores t2 on t1.film_id = t2.film_id
+join rotten_tomatoes_scores t3 on t1.film_id = t3.film_id
+group by "genre(s)"
+order by sum(t3.audience_score) desc
+limit 5',
+sep = "" )
+
+# pass your connection and the query to the tbl function and store as a variable
+top_rt_audience_genres <- tbl(my_connection, sql(query))
+top_rt_audience_genres
+```
+```{r}
+top_rt_audience_genres %>%
+  ggplot(aes(x=reorder(genres, -avg_rt_audience_score), y = avg_rt_audience_score)) +
+    geom_bar(stat = 'identity', color="beige", fill="lavender") +
+      xlab('Genre') +
+        ylab('Rotten Tomatoes Audience Score') +
+          ggtitle("Top 5 Genres According to Rotten Tomatoes Audience Score") +
+             theme(axis.text.x = element_text(size = 10))
+```
+
