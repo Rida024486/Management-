@@ -25,7 +25,7 @@ join rotten_tomatoes_scores t3 on t1.film_id = t3.film_id
 
 ```
 ```{sql connection=my_connection}
-#this query illustrates the highest "Wow Factor" score.
+/*this query illustrates the highest "Wow Factor" score.*/
 select t1.film_id, t1.film_name,
        (t2.imdb_score + t3.rt_audience_score + t3.rt_critic_score) AS wow_factor_score
 from films t1
@@ -43,7 +43,7 @@ limit 2;
 
 ```
 ```{sql connection=my_connection}
-#This query finds any films that were released in a specific time period and received a perfect score in all three rating categories.
+/*This query finds any films that were released in a specific time period and received a perfect score in all three rating categories.*/
 select t1.film_id, t1.film_name
 join films t1
 join (
@@ -60,7 +60,7 @@ where t1.time_period = 'Specific Time Period';
 
 ```
 ```{sql connection=my_connection}
-#This query finds if there are any correlation between the length of a film's title and its IMDb score
+/*This query finds if there are any correlation between the length of a film's title and its IMDb score*/
 select lenght(t1.film_name) AS title_length, AVG(t2.score) AS average_imdb_score
 from films t1
 join imdb_scores t2 ON t1.film_id = t2.film_id
@@ -81,7 +81,7 @@ order by sum(t3.audience_score) desc
 limit 5
 ```
 ```{sql connection=my_connection}
-/*this query counts many films were released each year.
+/*this query counts many films were released each year.*/
 select release_year, count(*) AS film_count
 from films
 group by release_year;
@@ -89,7 +89,7 @@ group by release_year;
 
 ```
 ```{sql connection=my_connection}
-#This query shows how many films with the highest Rotten Tomatoes audience score
+/*This query shows how many films with the highest Rotten Tomatoes audience score*/
 
 select t1.film_id, t1.film_name, t3.audience_score as rt_audience_score
 from films t1
@@ -98,7 +98,7 @@ join rotten_tomatoes_scores t3 on t1.film_id = t3.film_id;
 
 ```
 ```{sql connection=my_connection}
-#this query shows which films have the highest Rotten Tomatoes critic score
+/*this query shows which films have the highest Rotten Tomatoes critic score*/
 select t1.film_id, t1.film_name, t3.critic_score AS rt_critic_score
 from films t1
 join rotten_tomatoes_scores t3 ON t1.film_id = t3.film_id
@@ -107,7 +107,7 @@ where t3.critic_score = (select max(critic_score) from rotten_tomatoes_scores);
 
 ```
 ```{sql connection=my_connection}
-#this query shows which films have the highest IMDb score
+/*this query shows which films have the highest IMDb score*/
 SELECT t1.film_id, t1.film_name, t2.score AS imdb_score
 FROM films t1
 JOIN imdb_scores t2 ON t1.film_id = t2.film_id
@@ -117,7 +117,7 @@ WHERE t2.score = (SELECT MAX(score) FROM imdb_scores);
 
 ```
 ```{sql connection=my_connection}
-#this query shows What is the IMDb score of each film
+/*this query shows What is the IMDb score of each film*/
 SELECT t1.film_id, t1.film_name, t2.score AS imdb_score
 FROM films t1
 JOIN imdb_scores t2 ON t1.film_id = t2.film_id;
